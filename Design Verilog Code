@@ -1,0 +1,105 @@
+// Code your design here
+module mux3x1(S0,S1,A,X,B,PP);
+    input S0,S1;
+    input [7:0]A,X,B;
+    output reg[8:0]PP;
+
+  always @ (S0 or S1 or A or X or B)
+    begin
+      case ({S1,S0})
+        2'b00: PP<={1'b0,A};
+        2'b01: PP<={1'b0,X};
+        2'b10: PP<={1'b0,B};
+	endcase
+    end
+endmodule
+
+module mux2x1(S2,X,Y,PP);
+    input S2;
+  input [8:0]X,Y;
+    output reg[8:0]PP;
+
+  always @ (S2 or X or Y)
+    begin
+      case (S2)
+	1'b0: PP<=X;
+	1'b1: PP<=Y;
+	endcase
+    end
+endmodule
+
+module addsub(X,S,Y,Z);
+  input [8:0]X;
+  input [8:0]Y;
+  input S;
+  output reg[8:0]Z;
+  always@(S or X or Y)
+  begin
+  case (S)
+    1'b0: Z<=X+Y;
+    1'b1: Z<=X-Y;
+  endcase
+  end
+endmodule
+
+module ckt2(Y0,Y1,Y2,S01,S11,S21,A,X,B,PP);
+  input Y0,Y1,Y2;
+  input [7:0]A,X;
+  
+  output reg S01,S11,S21;
+  output reg[7:0]B;
+  output wire[8:0]PP;
+  mux3x1 a1(S01,S11,A,X,B,PP);
+  always@(Y0 or Y1 or Y2)
+    begin
+      S01=Y2;
+      S11=Y0~^Y1;
+      S21=(~Y0&~Y1&Y2);
+      B=X<<<1;
+      //mux3x1 a1(S0,S1,A,X,B,PP);
+    end 
+  
+endmodule
+//0X=A 2X=B  
+
+module B2C(X,Y);
+  input [8:0]X;
+  output reg[8:0]Y;
+  always@(X)
+    begin
+     Y=~X+1;
+      
+    end
+endmodule
+//A=0,B=2X
+
+module mainckt1(Y,A,B,X,D,E,F,Z1,Z2,Z3,PP1,PP2,PP3,PP4,PP5,PP6,PP7,PP8,PP9,PP10,S02,S12,S22,S03,S13,S23,S04,S14,S24,S05,S15,S25,p);
+  input [7:0]A,X,Y;
+  inout [7:0]B;
+  input D;
+  inout S02,S12,S22,S03,S13,S23,S04,S14,S24,S05,S15,S25;
+  inout [8:0]PP1,PP2,PP3,PP5,PP6,PP8,PP9,PP10,E,F;
+  inout [9:0]PP4,PP7;
+  inout [8:0]Z1,Z2,Z3;
+  output [14:0]p;
+  
+  
+  ckt2 a1(D,Y[0],Y[1],S02,S12,S22,A,X,B,PP1);
+  B2C b1(PP1,E);
+  mux2x1 c1(S22,PP1,E,PP2);
+  assign p[1:0]=PP2[1:0];
+  assign F={{2{PP2[8]}},PP2[8:2]};
+  ckt2 a2(Y[1],Y[2],Y[3],S03,S13,S23,A,X,B,PP3);
+  addsub d1(F,S23,PP3,Z1);
+  assign PP4={Z1[8],Z1};
+  assign p[3:2]=PP4[1:0];
+  assign PP5={PP4[9],PP4[9:2]};
+  ckt2 a3(Y[3],Y[4],Y[5],S04,S14,S24,A,X,B,PP6);
+  addsub d2(PP5,S24,PP6,Z2);
+  assign PP7={Z2[8],Z2};
+  assign p[5:4]=PP7[1:0];
+  assign PP8={PP7[9],PP7[9:2]};
+  ckt2 a4(Y[5],Y[6],Y[7],S05,S15,S25,A,X,B,PP9);
+  addsub d3(PP8,S25,PP9,Z3);
+  assign p[14:6]=Z3;
+endmodule
